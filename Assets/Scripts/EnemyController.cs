@@ -27,7 +27,7 @@ public class EnemyController : MonoBehaviour
         if (distanceTraveled >= patrolDistance || distanceTraveled <= -patrolDistance)
         {
             direction *= -1;
-            transform.localScale = new Vector3(-direction, 1f, 1f);
+            transform.rotation = Quaternion.Euler(0f, direction > 0 ? 0f : 180f, 0f);
         }
     }
 

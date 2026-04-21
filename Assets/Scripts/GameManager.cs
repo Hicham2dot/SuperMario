@@ -1,14 +1,17 @@
+using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
     [Header("UI")]
-    public Text scoreText;
-    public Text livesText;
+    public TMP_Text scoreText;
+    public TMP_Text livesText;
+    public TMP_Text gameOverText;
+    public float restartDelay = 3f;
 
     private int score = 0;
     private int lives = 3;
@@ -23,6 +26,9 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        if (gameOverText != null)
+            gameOverText.gameObject.SetActive(false);
+
         UpdateUI();
     }
 
@@ -45,10 +51,23 @@ public class GameManager : MonoBehaviour
 
     void GameOver()
     {
-        Debug.Log("Game Over!");
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        if (gameOverText != null)
+            gameOverText.gameObject.SetActive(true);
+
+        // Désactiver le joueur
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+            player.SetActive(false);
+
+        StartCoroutine(RestartAfterDelay());
+    }
+
+    IEnumerator RestartAfterDelay()
+    {
+        yield return new WaitForSeconds(restartDelay);
         score = 0;
         lives = 3;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     void UpdateUI()
