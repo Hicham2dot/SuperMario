@@ -9,8 +9,16 @@ public class PlayerController : MonoBehaviour
     [Header("Saut")]
     public float jumpForce = 6f;
 
+    [Header("Animations (optionnel)")]
+    public Animator animator;   // glisser PlayerModel ici dans l'Inspector
+
     private Rigidbody rb;
     private bool isGrounded;
+
+    // IDs précalculés pour éviter les string lookups chaque frame
+    private static readonly int HashRunning  = Animator.StringToHash("isRunning");
+    private static readonly int HashGrounded = Animator.StringToHash("isGrounded");
+    private static readonly int HashJump     = Animator.StringToHash("jumpTrigger");
 
     void Start()
     {
@@ -23,8 +31,6 @@ public class PlayerController : MonoBehaviour
         }
 
         rb.freezeRotation = true;
-
-        // Diagnostic au démarrage
         Debug.Log($"[Player] Start OK | isKinematic={rb.isKinematic} | constraints={rb.constraints}");
     }
 
@@ -34,6 +40,7 @@ public class PlayerController : MonoBehaviour
         {
             rb.linearVelocity = new Vector3(rb.linearVelocity.x, jumpForce, rb.linearVelocity.z);
             isGrounded = false;
+            if (animator != null) animator.SetTrigger(HashJump);
         }
     }
 
@@ -42,15 +49,18 @@ public class PlayerController : MonoBehaviour
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
 
-        // Log visible dès qu'une touche est pressée
-        if (h != 0f || v != 0f)
-            Debug.Log($"[Player] Touche détectée h={h} v={v} | vitesse appliquée={h * speed} / {v * speed}");
-
         rb.linearVelocity = new Vector3(h * speed, rb.linearVelocity.y, v * speed);
 
         Vector3 dir = new Vector3(h, 0f, v);
         if (dir.sqrMagnitude > 0.01f)
             transform.rotation = Quaternion.LookRotation(dir);
+
+        // Pilote l'Animator seulement s'il est assigné
+        if (animator != null)
+        {
+            animator.SetBool(HashRunning,  dir.sqrMagnitude > 0.01f);
+            animator.SetBool(HashGrounded, isGrounded);
+        }
     }
 
     void OnCollisionEnter(Collision col)

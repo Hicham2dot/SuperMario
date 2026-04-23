@@ -1,6 +1,6 @@
+using System.Collections;
 using UnityEngine;
 
-// Pièce collectable : ajoute des points et réapparaît à une position aléatoire sur le plan
 public class CoinCollectible : MonoBehaviour
 {
     [Header("Score")]
@@ -10,9 +10,22 @@ public class CoinCollectible : MonoBehaviour
     public float rotateSpeed = 90f;
 
     [Header("Respawn")]
-    public bool respawnOnCollect = true;    // true = réapparaît, false = disparaît définitivement
-    public float spawnAreaSize = 8f;        // demi-côté de la zone de spawn (carré centré sur 0,0)
-    public float spawnHeight = 0.5f;        // hauteur Y de la pièce après respawn
+    public float respawnDelay = 3f;
+    public float groundHalfSize = 4f;
+    public float spawnHeight = 0.5f;
+
+    // Les ennemis s'abonnent à cet événement pour se diriger vers le coin
+    public static event System.Action<Vector3> OnCoinAppeared;
+
+    private Renderer coinRenderer;
+    private Collider coinCollider;
+
+    void Start()
+    {
+        coinRenderer = GetComponent<Renderer>();
+        coinCollider = GetComponent<Collider>();
+        OnCoinAppeared?.Invoke(transform.position);
+    }
 
     void Update()
     {
@@ -24,19 +37,24 @@ public class CoinCollectible : MonoBehaviour
         if (!other.CompareTag("Player")) return;
 
         GameManager.Instance?.AddScore(value);
-        Debug.Log($"[Pièce] Collectée ! +{value} points");
-
-        if (respawnOnCollect)
-            Respawn();
-        else
-            Destroy(gameObject);
+        StartCoroutine(RespawnAfterDelay());
     }
 
-    void Respawn()
+    IEnumerator RespawnAfterDelay()
     {
-        float x = Random.Range(-spawnAreaSize, spawnAreaSize);
-        float z = Random.Range(-spawnAreaSize, spawnAreaSize);
+        if (coinRenderer != null) coinRenderer.enabled = false;
+        if (coinCollider != null) coinCollider.enabled = false;
+
+        yield return new WaitForSeconds(respawnDelay);
+
+        float x = Random.Range(-groundHalfSize, groundHalfSize);
+        float z = Random.Range(-groundHalfSize, groundHalfSize);
         transform.position = new Vector3(x, spawnHeight, z);
-        Debug.Log($"[Pièce] Respawn à ({x:F1}, {spawnHeight}, {z:F1})");
+
+        if (coinRenderer != null) coinRenderer.enabled = true;
+        if (coinCollider != null) coinCollider.enabled = true;
+
+        // Prévenir les ennemis que le coin est réapparu
+        OnCoinAppeared?.Invoke(transform.position);
     }
 }
