@@ -4,7 +4,7 @@ using UnityEngine;
 public class CoinCollectible : MonoBehaviour
 {
     [Header("Score")]
-    public int value = 20;
+    public int value = 30;
 
     [Header("Rotation")]
     public float rotateSpeed = 90f;

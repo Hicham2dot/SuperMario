@@ -12,7 +12,7 @@ public class GameManager : MonoBehaviour
     public TMP_Text gameOverText;   // TextMeshPro affiché au Game Over (désactivé au départ)
 
     [Header("Paramètres")]
-    public int startScore = 20;
+    public int startScore = 30;
     public float restartDelay = 3f;
 
     private int score;
