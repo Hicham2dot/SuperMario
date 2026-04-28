@@ -283,7 +283,8 @@ MonoBehaviour:
   rotateSpeed: 90
   respawnDelay: 3
   groundHalfSize: 4
-  spawnHeight: 0.5
+  groundOffset: 1
+  coinVisual: {fileID: 0}
 --- !u!136 &130243909
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -1010,11 +1011,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyController
   moveSpeed: 2
   chaseSpeedMultiplier: 1.5
-  detectionRange: 5.5
   circleRadius: 2.8
+  coinGuardDuration: 7
+  coinGuardChance: 0.45
   mass: 8
   groundHalfSize: 4.5
   totalEnemies: 8
+  groundOffset: 0
   damagePoints: 5
   damageCooldown: 1.5
 --- !u!65 &403542849
@@ -1398,6 +1401,74 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AttachToParent
   targetParent: {fileID: 773078449}
+--- !u!1001 &437236949
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 929517047}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 61f2c64d4f97d9f459a1d367eb16fb13, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 61f2c64d4f97d9f459a1d367eb16fb13, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 61f2c64d4f97d9f459a1d367eb16fb13, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 61f2c64d4f97d9f459a1d367eb16fb13, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 61f2c64d4f97d9f459a1d367eb16fb13, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 61f2c64d4f97d9f459a1d367eb16fb13, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 61f2c64d4f97d9f459a1d367eb16fb13, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 61f2c64d4f97d9f459a1d367eb16fb13, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 61f2c64d4f97d9f459a1d367eb16fb13, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 61f2c64d4f97d9f459a1d367eb16fb13, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -5716241880575410453, guid: 61f2c64d4f97d9f459a1d367eb16fb13, type: 3}
+      propertyPath: m_StaticShadowCaster
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 61f2c64d4f97d9f459a1d367eb16fb13, type: 3}
+      propertyPath: m_Name
+      value: Defend_SwordAndShield
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 61f2c64d4f97d9f459a1d367eb16fb13, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 61f2c64d4f97d9f459a1d367eb16fb13, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1500156586}
+  m_SourcePrefab: {fileID: 100100000, guid: 61f2c64d4f97d9f459a1d367eb16fb13, type: 3}
 --- !u!1 &453455788
 GameObject:
   m_ObjectHideFlags: 0
@@ -1702,11 +1773,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyController
   moveSpeed: 2
   chaseSpeedMultiplier: 1.5
-  detectionRange: 5.5
-  circleRadius: 2.8
+  circleRadius: 5
+  coinGuardDuration: 7
+  coinGuardChance: 0.555
   mass: 8
   groundHalfSize: 4.5
   totalEnemies: 8
+  groundOffset: 0
   damagePoints: 5
   damageCooldown: 1.5
 --- !u!65 &630413441
@@ -1887,11 +1960,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyController
   moveSpeed: 2
   chaseSpeedMultiplier: 1.5
-  detectionRange: 5.5
   circleRadius: 2.8
+  coinGuardDuration: 7
+  coinGuardChance: 0.681
   mass: 8
   groundHalfSize: 4.5
   totalEnemies: 8
+  groundOffset: 0
   damagePoints: 5
   damageCooldown: 1.5
 --- !u!65 &773078453
@@ -2131,7 +2206,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 929517041}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -2194,6 +2269,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1500156585}
   - {fileID: 1445889744}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2276,11 +2352,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyController
   moveSpeed: 2
   chaseSpeedMultiplier: 1.5
-  detectionRange: 5.5
   circleRadius: 2.8
+  coinGuardDuration: 7
+  coinGuardChance: 0.45
   mass: 8
   groundHalfSize: 4.5
   totalEnemies: 8
+  groundOffset: 0
   damagePoints: 5
   damageCooldown: 1.5
 --- !u!65 &941924212
@@ -2678,6 +2756,29 @@ Transform:
   m_Children: []
   m_Father: {fileID: 929517047}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1500156584 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 61f2c64d4f97d9f459a1d367eb16fb13, type: 3}
+  m_PrefabInstance: {fileID: 437236949}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1500156585 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 61f2c64d4f97d9f459a1d367eb16fb13, type: 3}
+  m_PrefabInstance: {fileID: 437236949}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1500156586
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1500156584}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12092a48bce203d4693acfc1c5231c6b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AttachToParent
+  targetParent: {fileID: 929517041}
 --- !u!1001 &1513943046
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2901,11 +3002,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyController
   moveSpeed: 2
   chaseSpeedMultiplier: 1.5
-  detectionRange: 5.5
   circleRadius: 2.8
+  coinGuardDuration: 7
+  coinGuardChance: 0.45
   mass: 8
   groundHalfSize: 4.5
   totalEnemies: 8
+  groundOffset: 0
   damagePoints: 5
   damageCooldown: 1.5
 --- !u!65 &1761258302
@@ -3086,11 +3189,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyController
   moveSpeed: 2
   chaseSpeedMultiplier: 1.5
-  detectionRange: 5.5
   circleRadius: 2.8
+  coinGuardDuration: 7
+  coinGuardChance: 0.45
   mass: 8
   groundHalfSize: 4.5
   totalEnemies: 8
+  groundOffset: 0
   damagePoints: 5
   damageCooldown: 1.5
 --- !u!65 &1872175697
@@ -3244,7 +3349,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5659405321523360794, guid: 5e4ba0de5a43b3141b613dae215fe292, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 3
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5659405321523360794, guid: 5e4ba0de5a43b3141b613dae215fe292, type: 3}
       propertyPath: m_LocalRotation.w

@@ -1,6 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(Collider))]
 public class PlayerController : MonoBehaviour
 {
     [Header("Mouvement")]
@@ -31,6 +32,15 @@ public class PlayerController : MonoBehaviour
         }
 
         rb.freezeRotation = true;
+
+        // Snap au sol : place le bas du collider exactement sur la surface du ground
+        Collider col = GetComponent<Collider>();
+        if (col != null && Physics.Raycast(transform.position + Vector3.up * 5f, Vector3.down, out RaycastHit hit, 20f))
+        {
+            float pivotToBottom = transform.position.y - col.bounds.min.y;
+            transform.position = new Vector3(transform.position.x, hit.point.y + pivotToBottom, transform.position.z);
+        }
+
         Debug.Log($"[Player] Start OK | isKinematic={rb.isKinematic} | constraints={rb.constraints}");
     }
 

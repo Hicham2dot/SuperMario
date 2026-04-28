@@ -7,9 +7,11 @@ public class EnemyController : MonoBehaviour
     public float moveSpeed = 3f;
     public float chaseSpeedMultiplier = 1.5f;
 
-    [Header("Détection joueur")]
-    public float detectionRange = 5.5f;
+    [Header("Comportement")]
     public float circleRadius = 2.8f;
+    public float coinGuardDuration = 7f;   // secondes à garder la pièce
+    [Range(0f, 1f)]
+    public float coinGuardChance = 0.45f;  // probabilité qu'un ennemi aille garder la pièce
 
     [Header("Physique")]
     public float mass = 8f;
@@ -17,28 +19,43 @@ public class EnemyController : MonoBehaviour
     [Header("Limites du sol")]
     public float groundHalfSize = 4.5f;
     public int totalEnemies = 8;
+    public float groundOffset = 0f;
 
     [Header("Dégâts joueur")]
     public int damagePoints = 5;
     public float damageCooldown = 1.5f;
 
-    private enum State { Patrol, Chase, Circle, Pause }
+    private enum State { Chase, Circle, Pause, GuardCoin }
 
     private Rigidbody rb;
     private Transform player;
     private State currentState;
     private Vector3 moveDirection;
     private Vector3 spawnPosition;
+    private Vector3 coinGuardPos;
 
     private float stateTimer;
     private float circleAngle;
-    private float circleDir;    // +1 ou -1 : sens d'orbite
+    private float circleDir;
 
     private float lastDamageTime = -99f;
     private static int s_nextIndex = 0;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void ResetSpawnIndex() => s_nextIndex = 0;
+
+    void OnEnable()  => CoinCollectible.OnCoinAppeared += OnCoinAppeared;
+    void OnDisable() => CoinCollectible.OnCoinAppeared -= OnCoinAppeared;
+
+    void OnCoinAppeared(Vector3 coinPos)
+    {
+        // Chaque ennemi a une chance aléatoire d'aller bloquer la pièce
+        if (Random.value < coinGuardChance)
+        {
+            coinGuardPos = new Vector3(coinPos.x, transform.position.y, coinPos.z);
+            EnterState(State.GuardCoin);
+        }
+    }
 
     void Start()
     {
@@ -55,28 +72,27 @@ public class EnemyController : MonoBehaviour
         int myIndex = s_nextIndex++;
         int cols = Mathf.CeilToInt(Mathf.Sqrt(totalEnemies));
         int rows = Mathf.CeilToInt((float)totalEnemies / cols);
-        int col = myIndex % cols;
-        int row = myIndex / cols;
+        int col  = myIndex % cols;
+        int row  = myIndex / cols;
 
-        float cellW = groundHalfSize * 2f / cols;
-        float cellH = groundHalfSize * 2f / rows;
+        float cellW  = groundHalfSize * 2f / cols;
+        float cellH  = groundHalfSize * 2f / rows;
         float spawnX = -groundHalfSize + cellW * (col + 0.5f) + Random.Range(-cellW * 0.2f, cellW * 0.2f);
         float spawnZ = -groundHalfSize + cellH * (row + 0.5f) + Random.Range(-cellH * 0.2f, cellH * 0.2f);
 
-        spawnPosition = new Vector3(spawnX, 0.5f, spawnZ);
+        float groundY = SnapToGround(spawnX, spawnZ);
+        spawnPosition = new Vector3(spawnX, groundY + groundOffset, spawnZ);
         transform.position = spawnPosition;
 
-        // Démarrage décalé pour que tous les ennemis ne soient pas synchronisés
-        stateTimer = Random.Range(0f, 1f);
-        EnterState(State.Patrol);
+        // Démarrage décalé pour éviter la synchronisation entre ennemis
+        stateTimer = Random.Range(0f, 2f);
+        EnterState(State.Chase);
     }
 
     void Update()
     {
         stateTimer -= Time.deltaTime;
-
-        float distToPlayer = DistToPlayer();
-        UpdateState(distToPlayer);
+        UpdateState();
     }
 
     void FixedUpdate()
@@ -85,9 +101,10 @@ public class EnemyController : MonoBehaviour
 
         float speed = currentState switch
         {
-            State.Chase  => moveSpeed * chaseSpeedMultiplier,
-            State.Pause  => 0f,
-            _            => moveSpeed
+            State.Chase     => moveSpeed * chaseSpeedMultiplier,
+            State.GuardCoin => moveSpeed,
+            State.Pause     => 0f,
+            _               => moveSpeed
         };
 
         rb.linearVelocity = new Vector3(moveDirection.x * speed, 0f, moveDirection.z * speed);
@@ -97,108 +114,84 @@ public class EnemyController : MonoBehaviour
     //  États
     // ──────────────────────────────────────────────
 
-    void UpdateState(float dist)
+    void UpdateState()
     {
         switch (currentState)
         {
-            case State.Patrol: UpdatePatrol(dist);  break;
-            case State.Chase:  UpdateChase(dist);   break;
-            case State.Circle: UpdateCircle(dist);  break;
-            case State.Pause:  UpdatePause(dist);   break;
+            case State.Chase:     UpdateChase();     break;
+            case State.Circle:    UpdateCircle();    break;
+            case State.Pause:     UpdatePause();     break;
+            case State.GuardCoin: UpdateGuardCoin(); break;
         }
     }
 
-    void UpdatePatrol(float dist)
+    void UpdateChase()
     {
-        // Détection immédiate si le joueur est très proche
-        if (dist < detectionRange * 0.5f)
-        {
-            EnterState(State.Chase);
-            return;
-        }
+        if (player == null) return;
+
+        // Fonce vers le joueur — sans limite de distance
+        SetMoveDir(FlatDir(player.position - transform.position).normalized);
 
         if (stateTimer > 0f) return;
 
-        // Quand le timer expire : décision aléatoire
-        if (dist < detectionRange)
-        {
-            float roll = Random.value;
-            if (roll < 0.55f)      EnterState(State.Chase);
-            else if (roll < 0.75f) EnterState(State.Pause);
-            else                   PickPatrolDirection();
-        }
-        else
-        {
-            PickPatrolDirection();
-        }
-    }
-
-    void UpdateChase(float dist)
-    {
-        if (player == null) { EnterState(State.Patrol); return; }
-
-        // Diriger vers le joueur en permanence
-        Vector3 dir = FlatDir(player.position - transform.position);
-        if (dir.sqrMagnitude > 0.01f)
-            SetMoveDir(dir.normalized);
-
-        // Joueur trop loin → abandon
-        if (dist > detectionRange * 1.6f)
-        {
-            EnterState(State.Patrol);
-            return;
-        }
-
-        if (stateTimer > 0f) return;
-
-        // Transition aléatoire après le timer
         float roll = Random.value;
-        if (roll < 0.45f)      EnterState(State.Circle);
-        else if (roll < 0.65f) EnterState(State.Pause);
-        else                   EnterState(State.Chase);   // reprend la chasse
+        if (roll < 0.45f)     EnterState(State.Circle);
+        else if (roll < 0.6f) EnterState(State.Pause);
+        else                  EnterState(State.Chase);
     }
 
-    void UpdateCircle(float dist)
+    void UpdateCircle()
     {
-        if (player == null) { EnterState(State.Patrol); return; }
+        if (player == null) { EnterState(State.Chase); return; }
 
         // Orbite autour du joueur
         circleAngle += circleDir * 80f * Time.deltaTime;
-        float rad = circleAngle * Mathf.Deg2Rad;
         Vector3 target = new(
-            player.position.x + Mathf.Cos(rad) * circleRadius,
+            player.position.x + Mathf.Cos(circleAngle * Mathf.Deg2Rad) * circleRadius,
             0f,
-            player.position.z + Mathf.Sin(rad) * circleRadius
+            player.position.z + Mathf.Sin(circleAngle * Mathf.Deg2Rad) * circleRadius
         );
 
         Vector3 dir = FlatDir(target - transform.position);
         if (dir.sqrMagnitude > 0.01f)
             SetMoveDir(dir.normalized);
 
-        if (dist > detectionRange * 1.6f)
-        {
-            EnterState(State.Patrol);
-            return;
-        }
-
         if (stateTimer > 0f) return;
 
         float roll = Random.value;
-        if (roll < 0.5f)       EnterState(State.Chase);
-        else if (roll < 0.75f) EnterState(State.Pause);
-        else                   EnterState(State.Circle);  // inverse le sens
+        if (roll < 0.5f)      EnterState(State.Chase);
+        else if (roll < 0.7f) EnterState(State.Pause);
+        else                  EnterState(State.Circle);
     }
 
-    void UpdatePause(float dist)
+    void UpdatePause()
     {
         moveDirection = Vector3.zero;
 
         if (stateTimer > 0f) return;
 
-        if (dist < detectionRange)
-            EnterState(Random.value < 0.65f ? State.Chase : State.Circle);
+        EnterState(Random.value < 0.65f ? State.Chase : State.Circle);
+    }
+
+    void UpdateGuardCoin()
+    {
+        Vector3 dir = FlatDir(coinGuardPos - transform.position);
+
+        if (dir.magnitude > 0.4f)
+        {
+            // Se déplace vers la pièce
+            SetMoveDir(dir.normalized);
+        }
         else
-            EnterState(State.Patrol);
+        {
+            // Sur la pièce : reste immobile pour bloquer le joueur
+            moveDirection = Vector3.zero;
+        }
+
+        if (stateTimer > 0f) return;
+
+        // Retour à la chasse après la durée de garde
+        EnterState(State.Chase);
     }
 
     // ──────────────────────────────────────────────
@@ -211,24 +204,23 @@ public class EnemyController : MonoBehaviour
 
         switch (next)
         {
-            case State.Patrol:
-                stateTimer = Random.Range(2f, 4f);
-                PickPatrolDirection();
-                break;
-
             case State.Chase:
                 stateTimer = Random.Range(1.5f, 3f);
                 break;
 
             case State.Circle:
-                stateTimer = Random.Range(2f, 3.5f);
+                stateTimer  = Random.Range(2f, 3.5f);
                 circleAngle = Random.Range(0f, 360f);
                 circleDir   = Random.value < 0.5f ? 1f : -1f;
                 break;
 
             case State.Pause:
-                stateTimer = Random.Range(0.4f, 1.2f);
+                stateTimer    = Random.Range(0.4f, 1.2f);
                 moveDirection = Vector3.zero;
+                break;
+
+            case State.GuardCoin:
+                stateTimer = coinGuardDuration + Random.Range(-1f, 2f);
                 break;
         }
     }
@@ -236,13 +228,6 @@ public class EnemyController : MonoBehaviour
     // ──────────────────────────────────────────────
     //  Helpers
     // ──────────────────────────────────────────────
-
-    void PickPatrolDirection()
-    {
-        float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
-        SetMoveDir(new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)));
-        stateTimer = Random.Range(1.5f, 3f);
-    }
 
     void SetMoveDir(Vector3 dir)
     {
@@ -253,12 +238,10 @@ public class EnemyController : MonoBehaviour
 
     static Vector3 FlatDir(Vector3 v) => new(v.x, 0f, v.z);
 
-    float DistToPlayer()
+    static float SnapToGround(float x, float z)
     {
-        if (player == null) return float.MaxValue;
-        return Vector3.Distance(
-            new Vector3(transform.position.x, 0f, transform.position.z),
-            new Vector3(player.position.x,    0f, player.position.z));
+        return Physics.Raycast(new Vector3(x, 50f, z), Vector3.down, out RaycastHit hit, 100f)
+               ? hit.point.y : 0f;
     }
 
     void ClampToBounds()
@@ -279,7 +262,9 @@ public class EnemyController : MonoBehaviour
     {
         if (!collision.collider.CompareTag("Player"))
         {
-            PickPatrolDirection();
+            // Rebond sur obstacle : changer de direction
+            if (currentState != State.GuardCoin)
+                EnterState(State.Chase);
             return;
         }
 
